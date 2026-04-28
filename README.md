@@ -15,6 +15,19 @@ Terminal JSONL log explorer built with Textual.
 uv sync
 ```
 
+## Local Install
+
+1. Install `uv` if you do not already have it.
+2. Clone this repository and `cd` into it.
+3. Create the environment and install dependencies with `uv sync`.
+4. Run the app with `uv run visibill < sample.log`.
+
+If you prefer to install the package into your active environment, use:
+
+```bash
+uv pip install .
+```
+
 ## Run
 
 ```bash
