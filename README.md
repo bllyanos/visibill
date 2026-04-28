@@ -28,6 +28,14 @@ If you prefer to install the package into your active environment, use:
 uv pip install .
 ```
 
+To install the CLI globally with `uv tool`:
+
+```bash
+uv tool install .
+```
+
+After that, run `visibill` from your shell without `uv run`.
+
 ## Run
 
 ```bash
