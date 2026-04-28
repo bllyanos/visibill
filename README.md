@@ -22,16 +22,16 @@ uv sync
 3. Create the environment and install dependencies with `uv sync`.
 4. Run the app with `uv run visibill < sample.log`.
 
+To install the CLI globally with `uv tool` (**Recommended**):
+
+```bash
+uv tool install .
+```
+
 If you prefer to install the package into your active environment, use:
 
 ```bash
 uv pip install .
-```
-
-To install the CLI globally with `uv tool`:
-
-```bash
-uv tool install .
 ```
 
 After that, run `visibill` from your shell without `uv run`.
