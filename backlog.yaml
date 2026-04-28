@@ -1,0 +1,32 @@
+backlogs:
+  quoted-filter-values:
+    status: pending
+    description: |
+      Support quoted filter values with spaces, for example `message~"document expiration"`,
+      instead of splitting every clause on whitespace.
+    plan: ""
+
+  filter-input-debounce:
+    status: done
+    description: |
+      Debounce filter input updates so the table does not re-filter on every keystroke
+      and typing stays responsive on larger log sets.
+    plan: |
+      Add a short debounce in `visibill/app.py` before applying filter changes from the input widget.
+      Use a 200ms delay, which is short enough to feel immediate while preventing a full filter pass on every character.
+      Cancel or replace any pending debounce timer when the user keeps typing, and only apply the latest filter value.
+      Add or update tests to cover delayed filter application and ensure the final typed value is the one that gets applied.
+
+  numeric-field-comparisons:
+    status: pending
+    description: |
+      Add structured comparison support for explicit numeric fields if real log data
+      needs it beyond `timestamp`.
+    plan: ""
+
+  timestamp-parsing-expansion:
+    status: pending
+    description: |
+      Expand timestamp parsing only if needed for additional real-world formats beyond
+      the current ISO-like and date-prefix behavior.
+    plan: ""

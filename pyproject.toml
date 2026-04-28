@@ -1,0 +1,19 @@
+[project]
+name = "visibill"
+version = "0.1.0"
+description = "Terminal log exploration tools built with Textual"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "textual>=3.1.0",
+]
+
+[project.scripts]
+visibill = "visibill.main:main"
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true

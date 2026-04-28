@@ -1,0 +1,168 @@
+# Advanced Filtering Plan
+
+## Goal
+
+Add a small query language on top of the existing substring filter so users can write filters like:
+
+- `level=error`
+- `source=AwsS3Client.uploadOne`
+- `timestamp>='2026-04-13'`
+- `message~upload`
+
+The feature should stay keyboard-first and should not require a separate modal or screen.
+
+## Product Direction
+
+Keep the current filter input as the single entry point.
+
+Behavior should be:
+
+- Plain text with no operator keeps the current substring behavior.
+- Structured expressions opt into advanced filtering.
+- If parsing fails, show a clear status error and fall back to zero matches rather than guessing.
+
+This keeps the existing fast path intact while adding a more precise filter mode.
+
+## Scope
+
+First pass should support:
+
+- Equality: `field=value`
+- Inequality: `field!=value`
+- Contains: `field~value`
+- Numeric or timestamp comparison: `field>value`, `field>=value`, `field<value`, `field<=value`
+- Multiple clauses combined with implicit AND, for example:
+  - `level=info source~AwsS3Client`
+
+First pass should not support:
+
+- OR expressions
+- Parentheses
+- Nested boolean logic
+- Wildcards or regex
+- Arbitrary JSONPath traversal
+
+## Fields
+
+Supported field names should be explicit and small.
+
+Suggested initial fields:
+
+- `timestamp`
+- `level`
+- `source`
+- `message`
+- `raw`
+
+For the current log format, add aliases that map cleanly onto normalized values or common raw payload fields:
+
+- `ts` -> `timestamp`
+- `logger` -> `source`
+- `method` -> `source`
+
+Optional raw payload field access can be added later if there is a strong need, but it should not be in the first implementation.
+
+## Parsing Model
+
+Introduce a tiny parser module, for example `visibill/filtering.py`.
+
+Suggested internal model:
+
+```python
+@dataclass(slots=True)
+class FilterClause:
+    field: str
+    operator: str
+    value: str
+
+
+@dataclass(slots=True)
+class FilterQuery:
+    raw: str
+    text_fallback: str | None
+    clauses: list[FilterClause]
+```
+
+Rules:
+
+- Empty input means no filter.
+- If the input contains no recognized operator tokens, treat it as plain substring text.
+- Split clauses on whitespace for the first version.
+- Allow quoted values for spaces later if needed, but do not require them in the first pass.
+
+## Matching Rules
+
+Normalized string fields:
+
+- `level`, `source`, `message`, and `raw` comparisons should be case-insensitive.
+- `=` and `!=` compare normalized lowercase strings.
+- `~` performs case-insensitive substring match.
+
+Timestamp fields:
+
+- Compare timestamps lexicographically only after normalizing to ISO 8601 strings.
+- For values like `2026-04-13`, treat them as a prefix-compatible date string for comparisons.
+- If a timestamp value is missing, the clause does not match.
+
+Numeric comparison:
+
+- Only enable numeric comparisons for fields that are explicitly numeric in the future.
+- For the first pass, comparison operators should be supported only for `timestamp`.
+
+## UI Behavior
+
+Keep the existing input widget and key bindings.
+
+Status line should show:
+
+- total rows
+- visible rows
+- parse failures
+- filter mode: `text` or `query`
+- parse error, if any
+
+Examples:
+
+- `total=10 visible=2 parse_failures=0 filter_mode=query`
+- `total=10 visible=0 parse_failures=0 filter_error=unknown field 'jobId'`
+
+## Implementation Steps
+
+1. Add a small parser for advanced filter expressions.
+2. Add a matcher that evaluates clauses against `LogEvent` normalized fields.
+3. Preserve current substring filtering as the fallback path.
+4. Update status text to show filter mode and parse errors.
+5. Add focused tests for parser and matcher behavior.
+6. Verify against the current `sample.log` format.
+
+## Suggested Minimal Test Cases
+
+Parser:
+
+- `level=error`
+- `message~upload`
+- `timestamp>='2026-04-13'`
+- `level=info source~aws`
+- invalid: `level==error`
+- invalid: `unknown=foo`
+
+Matcher against sample logs:
+
+- `level=info` returns all info rows.
+- `source~AwsS3Client` returns upload rows.
+- `message~expiration` returns the expiration check rows.
+- `timestamp>='2026-04-28T10:40:00Z'` returns the later rows.
+
+## Design Constraints
+
+- Do not replace the current simple filtering behavior.
+- Do not introduce a full query language framework.
+- Keep everything in memory and synchronous.
+- Prefer a tiny parser and direct predicate evaluation over abstraction-heavy AST machinery.
+
+## Follow-Up Ideas
+
+- Quoted values with spaces, such as `message~"document expiration"`
+- OR support, such as `level=error OR level=warn`
+- Raw payload field access, such as `fields.logPoint=end`
+- Field suggestions or inline help in the footer
