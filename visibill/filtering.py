@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import shlex
 from typing import Final
 
 from visibill.logs import LogEvent
@@ -49,8 +50,15 @@ def parse_filter(raw: str) -> FilterQuery:
     if not has_structured_operator(stripped):
         return FilterQuery(raw=raw, text_fallback=stripped.lower(), clauses=[])
 
-    clauses = [parse_clause(token) for token in stripped.split()]
+    clauses = [parse_clause(token) for token in split_clause_tokens(stripped)]
     return FilterQuery(raw=raw, text_fallback=None, clauses=clauses)
+
+
+def split_clause_tokens(raw: str) -> list[str]:
+    try:
+        return shlex.split(raw)
+    except ValueError as exc:
+        raise FilterParseError(str(exc)) from exc
 
 
 def parse_clause(token: str) -> FilterClause:

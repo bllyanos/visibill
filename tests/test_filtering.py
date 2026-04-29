@@ -45,6 +45,22 @@ class ParseFilterTests(unittest.TestCase):
         self.assertEqual(query.clauses[0].field, "level")
         self.assertEqual(query.clauses[1].field, "source")
 
+    def test_parses_quoted_value_with_spaces(self) -> None:
+        query = parse_filter('message~"document expiration"')
+
+        self.assertEqual(len(query.clauses), 1)
+        self.assertEqual(query.clauses[0].field, "message")
+        self.assertEqual(query.clauses[0].operator, "~")
+        self.assertEqual(query.clauses[0].value, "document expiration")
+
+    def test_parses_multiple_clauses_with_quoted_value(self) -> None:
+        query = parse_filter('level=info message~"document expiration"')
+
+        self.assertEqual(len(query.clauses), 2)
+        self.assertEqual(query.clauses[0].field, "level")
+        self.assertEqual(query.clauses[1].field, "message")
+        self.assertEqual(query.clauses[1].value, "document expiration")
+
     def test_rejects_double_equals(self) -> None:
         with self.assertRaisesRegex(FilterParseError, r"invalid clause"):
             parse_filter("level==error")
@@ -52,6 +68,10 @@ class ParseFilterTests(unittest.TestCase):
     def test_rejects_unknown_field(self) -> None:
         with self.assertRaisesRegex(FilterParseError, r"unknown field 'unknown'"):
             parse_filter("unknown=foo")
+
+    def test_rejects_unterminated_quote(self) -> None:
+        with self.assertRaisesRegex(FilterParseError, r"No closing quotation"):
+            parse_filter('message~"document expiration')
 
 
 class MatchFilterTests(unittest.TestCase):
@@ -74,6 +94,9 @@ class MatchFilterTests(unittest.TestCase):
 
     def test_message_contains(self) -> None:
         self.assert_matching_indexes("message~expiration", [9, 10])
+
+    def test_message_contains_with_quoted_spaces(self) -> None:
+        self.assert_matching_indexes('message~"document expiration"', [9, 10])
 
     def test_timestamp_greater_equal(self) -> None:
         self.assert_matching_indexes("timestamp>='2026-04-28T10:40:00Z'", [9, 10])

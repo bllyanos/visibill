@@ -58,8 +58,10 @@ Examples:
 level=error
 source~AwsS3Client
 message~expiration
+message~"document expiration"
 timestamp>='2026-04-28T10:40:00Z'
 level=info source~AwsS3Client
+level=info message~"document expiration"
 ts>='2026-04-13'
 ```
 
