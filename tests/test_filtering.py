@@ -164,9 +164,9 @@ class FilterDebounceTests(unittest.TestCase):
 
         app.handle_filter_changed(ChangedEvent("level=info"))
 
-        app.set_timer.assert_called_once_with(
-            FILTER_DEBOUNCE_SECONDS, app.apply_pending_filter
-        )
+        app.set_timer.assert_called_once()
+        self.assertEqual(app.set_timer.call_args.args[0], FILTER_DEBOUNCE_SECONDS)
+        self.assertTrue(callable(app.set_timer.call_args.args[1]))
         self.assertEqual(app.pending_filter_value, "level=info")
         self.assertIs(app.filter_debounce_timer, timer)
 
@@ -186,6 +186,25 @@ class FilterDebounceTests(unittest.TestCase):
         first_timer.stop.assert_called_once_with()
         self.assertEqual(app.pending_filter_value, "level=info")
         self.assertIs(app.filter_debounce_timer, second_timer)
+
+    def test_stale_timer_callback_is_ignored(self) -> None:
+        class ChangedEvent:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+        app = VisibillApp(load_sample_events())
+        first_timer = Mock()
+        second_timer = Mock()
+        app.set_timer = Mock(side_effect=[first_timer, second_timer])  # type: ignore[method-assign]
+        app.apply_filter = Mock()  # type: ignore[method-assign]
+
+        app.handle_filter_changed(ChangedEvent("level=i"))
+        first_callback = app.set_timer.call_args_list[0].args[1]
+        app.handle_filter_changed(ChangedEvent("level=info"))
+
+        first_callback()
+
+        app.apply_filter.assert_not_called()
 
     def test_apply_pending_filter_uses_latest_typed_value(self) -> None:
         app = VisibillApp(load_sample_events())

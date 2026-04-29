@@ -168,6 +168,7 @@ class VisibillApp(App[None]):
         self.filter_error: str | None = None
         self.pending_filter_value = ""
         self.filter_debounce_timer: Timer | None = None
+        self.filter_debounce_request = 0
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -196,15 +197,21 @@ class VisibillApp(App[None]):
     @on(Input.Changed, "#filter")
     def handle_filter_changed(self, event: Input.Changed) -> None:
         self.pending_filter_value = event.value
+        self.filter_debounce_request += 1
+        request = self.filter_debounce_request
 
         if self.filter_debounce_timer is not None:
             self.filter_debounce_timer.stop()
 
         self.filter_debounce_timer = self.set_timer(
-            FILTER_DEBOUNCE_SECONDS, self.apply_pending_filter
+            FILTER_DEBOUNCE_SECONDS,
+            lambda: self.apply_pending_filter(request),
         )
 
-    def apply_pending_filter(self) -> None:
+    def apply_pending_filter(self, request: int | None = None) -> None:
+        if request is not None and request != self.filter_debounce_request:
+            return
+
         self.filter_debounce_timer = None
         self.apply_filter(self.pending_filter_value)
 
