@@ -40,6 +40,8 @@ After that, run `visibill` from your shell without `uv run`.
 
 ```bash
 visibill < sample.log
+visibill --file sample.log
+visibill --help
 ```
 
 ## Filtering
