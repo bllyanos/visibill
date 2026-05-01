@@ -1,0 +1,20 @@
+archived:
+  numeric-field-comparisons:
+    status: cancelled
+    description: |
+      Add structured comparison support for explicit numeric fields if real log data
+      needs it beyond `timestamp`.
+    plan: ""
+    reason: |
+      No real-world use case identified. Timestamp comparisons already work. Archived
+      until explicit numeric field filtering is requested.
+
+  timestamp-parsing-expansion:
+    status: cancelled
+    description: |
+      Expand timestamp parsing only if needed for additional real-world formats beyond
+      the current ISO-like and date-prefix behavior.
+    plan: ""
+    reason: |
+      Current ISO-like and date-prefix parsing covers known log formats. Archived until
+      a specific unsupported timestamp format is reported.

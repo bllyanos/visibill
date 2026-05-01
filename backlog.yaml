@@ -1,32 +1,49 @@
 backlogs:
-  quoted-filter-values:
+  default-theme-catppuccin-mocha:
+    status: done
+    description: |
+      Make `catppuccin-mocha` the actual default theme under the current Textual API.
+    plan: |
+      Update the app to use the supported theme configuration for the installed Textual version.
+      Verify the app starts with the mocha theme enabled by default.
+
+  cli-help-and-file-input:
+    status: done
+    description: |
+      Add a proper CLI so `visibill --help` works and `visibill -f some-log-file.log`
+      can open log files directly.
+    plan: |
+      Add argument parsing in the entrypoint for `--help`, `-f/--file`, and stdin fallback.
+      Keep the current pipe-based workflow working as-is.
+      Add tests for help output and file input handling.
+
+  ripgrep-file-backed-search:
     status: pending
+    description: |
+      Use `rg` for plain-text search when the session is backed by a file, while keeping
+      in-memory filtering for piped stdin sessions.
+    plan: |
+      Detect file-backed sessions in the CLI or app startup path.
+      Route plain-text search through `ripgrep` for file sources only.
+      Preserve the existing in-memory search path for stdin input.
+      Add coverage for the file-backed and stdin-backed modes.
+
+  quoted-filter-values:
+    status: done
     description: |
       Support quoted filter values with spaces, for example `message~"document expiration"`,
       instead of splitting every clause on whitespace.
-    plan: ""
+    plan: |
+      Tokenize structured filters with quote-aware parsing so values can contain spaces.
+      Preserve existing unquoted clause behavior and raise a clear parse error for unmatched quotes.
+      Add parser, matcher, and README coverage for quoted filter examples.
 
   filter-input-debounce:
     status: done
     description: |
-      Debounce filter input updates so the table does not re-filter on every keystroke
-      and typing stays responsive on larger log sets.
+      Make filter input debounce more robust so rapid typing never applies stale values
+      or misses the latest edit.
     plan: |
-      Add a short debounce in `visibill/app.py` before applying filter changes from the input widget.
-      Use a 200ms delay, which is short enough to feel immediate while preventing a full filter pass on every character.
-      Cancel or replace any pending debounce timer when the user keeps typing, and only apply the latest filter value.
-      Add or update tests to cover delayed filter application and ensure the final typed value is the one that gets applied.
-
-  numeric-field-comparisons:
-    status: pending
-    description: |
-      Add structured comparison support for explicit numeric fields if real log data
-      needs it beyond `timestamp`.
-    plan: ""
-
-  timestamp-parsing-expansion:
-    status: pending
-    description: |
-      Expand timestamp parsing only if needed for additional real-world formats beyond
-      the current ISO-like and date-prefix behavior.
-    plan: ""
+      Harden the debounce callback so stale timers cannot apply older input after newer edits.
+      Keep the current short delay, but ensure only the latest pending filter value wins.
+      Add or update tests for rapid successive changes and final-value application.
